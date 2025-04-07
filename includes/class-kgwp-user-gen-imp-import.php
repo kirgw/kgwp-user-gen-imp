@@ -1,11 +1,23 @@
 <?php
 
+/**
+ * The file defines the import class
+ *
+ * @package    KGWP\UserGenImp
+ * @subpackage KGWP\UserGenImp\Inc
+ */
+
 namespace KGWP\UserGenImp\Inc;
 
-use KGWP\UserGenImp\Inc\Init;
+// Security check - exit if accessed directly
+defined('ABSPATH') || exit;
 
+/**
+ * Import class (CSV)
+ *
+ * @class KGWP\UserGenImp\Inc\Import
+ */
 class Import {
-
 
     /**
      * Import type
@@ -35,7 +47,7 @@ class Import {
     public function launch($import_type = 'generated') {
 
         // Check the access
-        if (Init::is_allowed() === false) {
+        if (\KGWP\UserGenImp\Inc\Init::is_allowed() === false) {
             return;
         }
 
@@ -57,26 +69,142 @@ class Import {
     }
 
 
+    /**
+     * Import users from a CSV file
+     *
+     * The CSV file should be located in the plugin directory and named "users.csv".
+     * The file should have the following columns:
+     *  - username
+     *  - email
+     *  - role
+     *
+     * @return array An array of integers representing the IDs of the users that were successfully imported
+     */
     public static function import_from_csv() {
+
+        $file_path = KGWP_USERGENIMP_PLUGIN_PATH . 'users.csv';
 
         if (self::validate_csv() === false) {
             return false;
         }
 
+        $file = fopen($file_path, 'r');
+        if (!$file) {
+            error_log('CSV Import: Could not open file at ' . $file_path);
+            return false;
+        }
+
+        $header = fgetcsv($file); // Skip the header row
+
+        $users_data = array();
+        while (($data = fgetcsv($file)) !== false) {
+
+            $username = $data[0];
+            $email = $data[1];
+            $role = $data[2];
+
+            $users_data[] = array(
+                'username' => $username,
+                'email' => $email,
+                'role' => $role,
+            );
+        }
+
+        fclose($file);
+
+        $imported = self::insert_users_in_db($users_data);
+
+        return $imported;
     }
 
 
+    /**
+     * Insert a single user into the database
+     *
+     * @param string $username The username of the user to insert
+     * @param string $email The email of the user to insert
+     * @param string $role The role of the user to insert
+     *
+     * @return int|false The ID of the inserted user, or false on failure
+     */
+    private static function insert_single_user_in_db($username, $email, $role) {
+
+        $username = sanitize_text_field($username);
+        $email = sanitize_email($email);
+        $role = sanitize_text_field($role);
+
+        if (username_exists($username) || email_exists($email)) {
+            error_log("CSV Import: User already exists: username=$username, email=$email");
+            return false;
+        }
+
+        $userdata = array(
+            'user_login' => $username,
+            'user_email' => $email,
+            'role' => $role,
+            'user_pass' => wp_generate_password(12, false), // Generate a random password
+        );
+
+        $user_id = wp_insert_user($userdata);
+
+        if (is_wp_error($user_id)) {
+            error_log('CSV Import: Error creating user: ' . $user_id->get_error_message());
+            return false;
+        }
+
+        return $user_id;
+    }
+
+
+    /**
+     * Validate a CSV file
+     *
+     * Checks if the file exists, can be opened, has a valid header row, and contains the required fields
+     *
+     * @return bool
+     */
     public static function validate_csv() {
 
+        $file_path = KGWP_USERGENIMP_PLUGIN_PATH . 'users.csv';
 
-        // Validate CSV file
+        if (!file_exists($file_path)) {
+            error_log('CSV Import: File not found at ' . $file_path);
+            return false;
+        }
 
+        $file = fopen($file_path, 'r');
+        if (!$file) {
+            error_log('CSV Import: Could not open file at ' . $file_path);
+            fclose($file); // Close file before returning
+            return false;
+        }
 
-        // Validate header fields
+        $header = fgetcsv($file);
+        fclose($file);
 
+        if ($header === false) {
+            error_log('CSV Import: Could not read header row from ' . $file_path);
+            return false;
+        }
+
+        $required_fields = array('username', 'email', 'role');
+        foreach ($required_fields as $field) {
+
+            if (!in_array($field, $header)) {
+                error_log('CSV Import: Missing required field "' . $field . '" in header row of ' . $file_path);
+                return false;
+            }
+        }
+
+        return true;
     }
 
 
+    /**
+     * Import users from the transient variable 'kgwp_generated_users' to the database
+     *
+     * @return array|false An array of user IDs of the inserted users, or false on failure
+     */
     public static function import_from_generated() {
 
         // Get transient, if not empty
@@ -85,13 +213,27 @@ class Import {
             return false;
         }
 
+        $users_data = array();
+        foreach ($generated_users as $user_data) {
+            $users_data[] = array(
+                'username' => $user_data['username'],
+                'email' => $user_data['email'],
+                'role' => $user_data['role'],
+            );
+        }
+
         // Insert the users into the database
-        return self::insert_users_in_db($generated_users);
+        return self::insert_users_in_db($users_data);
     }
 
 
-
-
+    /**
+     * Insert users into the database
+     *
+     * @param array $users_data array of objects with properties 'name', 'email', 'role'
+     *
+     * @return array|false array of user IDs of the inserted users
+     */
     public static function insert_users_in_db($users_data) {
 
         $imported = array();
@@ -100,29 +242,23 @@ class Import {
             return false;
         }
 
-        foreach ($users_data as $usergenimp_user) {
+        foreach ($users_data as $user_data) {
 
-            if (username_exists($usergenimp_user->get_name())) {
+            $username = $user_data['username'];
+            $email = $user_data['email'];
+            $role = $user_data['role'];
+
+            if (username_exists($username) || email_exists($email)) {
                 continue;
             }
 
-            $userdata = array(
-                'user_login' =>  $usergenimp_user->get_name(),
-                'user_email' =>  $usergenimp_user->get_email(),
-                'role'       =>  $usergenimp_user->get_role(),
-                'user_pass'  =>  '',
-            );
+            $user_id = self::insert_single_user_in_db($username, $email, $role);
 
-            $imported[] = wp_insert_user($userdata);
+            if ($user_id) {
+                $imported[] = $user_id;
+            }
         }
 
         return $imported;
     }
-
-
-
-
-
 }
-
-
