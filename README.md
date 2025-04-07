@@ -1,4 +1,4 @@
-# KG WP User Generation & Import
+# KG WP User Generation & Import (beta)
 
 
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
@@ -6,8 +6,9 @@ License URI: http://www.gnu.org/licenses/gpl-2.0.html
 ## Description
 
 Easily generate and/or import user data on your site. Useful for testing or migration.
-The plugin started as a class separated from KG WP User Data Display plugin and developed further.
+The plugin started as a class separated from KG WP User Data Display plugin and developed further. 
 
+Still in work, currently "beta".
 
 ## Features
 
