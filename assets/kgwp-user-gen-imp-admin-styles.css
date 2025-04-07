@@ -1,0 +1,49 @@
+
+.kgwp-user-gen-imp-admin-container {
+    max-width: 850px;
+    margin-top: 3px;
+    border-top: 1px solid rgb(72, 179, 168);
+    /* border-left: 1px solid rgb(30, 124, 115); */
+    /* border-right: 3px solid rgb(30, 124, 115); */
+    border-bottom: 3px solid rgb(38, 148, 137);
+    /* margin: 0 auto; */
+    padding: 20px;
+    background: #fff;
+    /* border-radius: 20px; */
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.kgwp-users-table-container {
+    margin: 20px 0;
+    overflow-x: unset;
+    height: 500px;
+    overflow-y: scroll;
+    /* scrollable table  */
+}
+
+.kgwp-users-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 10px 0;
+}
+
+.kgwp-users-table th,
+.kgwp-users-table td {
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    text-align: left;
+}
+
+.kgwp-users-table tr:nth-child(even) {
+    background-color: #f9f9f9;
+}
+
+.kgwp-users-table tr:hover {
+    background-color: #f1f1f1;
+}
+
+.kgwp-users-table th {
+    background-color: #f0f0f0;
+    font-weight: bold;
+}
+
