@@ -26,6 +26,12 @@ defined('ABSPATH') || exit;
             <?php echo KGWP_USERGENIMP_DEFAULT_USERS_FILE; ?>
         </h2>
 
+        <?php if (!empty($import_result)) : ?>
+            <div class="notice notice-success is-dismissible">
+                <p><?php echo esc_html($import_result); ?></p>
+            </div>
+        <?php endif; ?>
+
         <p><?php esc_html_e('Here you can import users from a users.csv file in plugin folder (feel free to edit it as needed).', KGWP_USERGENIMP_SLUG); ?></p>
 
         <div class="import-section">
@@ -68,7 +74,7 @@ defined('ABSPATH') || exit;
             <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
                 <input type="hidden" name="action" value="import_users">
                 <input type="hidden" name="import_type" value="csv">
-                <?php wp_nonce_field('import_users_nonce', 'import_nonce'); ?>
+                <?php wp_nonce_field('import_csv_nonce', 'import_nonce'); ?>
                 <input type="submit" class="button button-primary button-hero" value="<?php esc_html_e('Import from CSV', KGWP_USERGENIMP_SLUG); ?>">
             </form>
 
@@ -134,8 +140,8 @@ defined('ABSPATH') || exit;
             <?php if (!empty($generated_users)) : // Add buttons for data ?>
                 <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
                     <input type="hidden" name="action" value="import_users">
-                    <input type="hidden" name="import_type" value="csv">
-                    <?php wp_nonce_field('import_users_nonce', 'import_nonce'); ?>
+                    <input type="hidden" name="import_type" value="generated">
+                    <?php wp_nonce_field('import_generated_nonce', 'import_nonce'); ?>
                     <input type="submit" class="button button-primary button-hero" value="<?php esc_html_e('Import from generated', KGWP_USERGENIMP_SLUG); ?>">
                 </form>
             <?php endif; ?>

@@ -209,6 +209,7 @@ class Import {
 
         // Get transient, if not empty
         $generated_users = get_transient('kgwp_generated_users');
+
         if (empty($generated_users)) {
             return false;
         }
@@ -216,9 +217,11 @@ class Import {
         $users_data = array();
         foreach ($generated_users as $user_data) {
             $users_data[] = array(
-                'username' => $user_data['username'],
-                'email' => $user_data['email'],
-                'role' => $user_data['role'],
+                'username'   => $user_data['user_login'],
+                'email'      => $user_data['user_email'],
+                'first_name' => $user_data['first_name'],
+                'last_name'  => $user_data['last_name'],
+                'role'       => $user_data['role'],
             );
         }
 

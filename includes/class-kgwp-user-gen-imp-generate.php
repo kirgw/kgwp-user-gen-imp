@@ -1,7 +1,22 @@
 <?php
 
+/**
+ * The file defines the generate class
+ *
+ * @package    KGWP\UserGenImp
+ * @subpackage KGWP\UserGenImp\Inc
+ */
+
 namespace KGWP\UserGenImp\Inc;
 
+// Security check - exit if accessed directly
+defined('ABSPATH') || exit;
+
+/**
+ * Generate users class
+ *
+ * @class KGWP\UserGenImp\Inc\Generate
+ */
 class Generate {
 
     private static $names_data;

@@ -74,16 +74,53 @@ class AdminPages {
      */
     public function handle_import_users() {
 
-        // Check nonce
-        if (!isset($_POST['import_nonce']) || ! wp_verify_nonce($_POST['import_nonce'], 'import_users_nonce')) {
-            wp_die('Security check failed');
-        }
-
         // Check import type
         if (isset($_POST['import_type'])) {
+
             $import_type = sanitize_text_field($_POST['import_type']);
+
+            // Check nonce based on import type
+            if ($import_type === 'csv') {
+                if (!isset($_POST['import_nonce']) || !wp_verify_nonce($_POST['import_nonce'], 'import_csv_nonce')) {
+                    wp_die('Security check failed');
+                }
+            }
+
+            elseif ($import_type === 'generated') {
+                if (!isset($_POST['import_nonce']) || !wp_verify_nonce($_POST['import_nonce'], 'import_generated_nonce')) {
+                    wp_die('Security check failed');
+                }
+            }
+
+            else {
+                wp_die('Invalid import type');
+            }
+
             $import = new \KGWP\UserGenImp\Inc\Import();
-            $import->launch($import_type);
+            $result = $import->launch($import_type);
+
+            // Store the result in a transient
+            if ($import_type === 'csv') {
+
+                if (is_array($result)) {
+                    set_transient('kgwp_import_result', sprintf(__('Successfully imported %d users from CSV.', $this->text_domain), count($result)), 60);
+                }
+
+                else {
+                    set_transient('kgwp_import_result', __('Failed to import users from CSV.', $this->text_domain), 60);
+                }
+            }
+
+            elseif ($import_type === 'generated') {
+
+                if (is_array($result)) {
+                    set_transient('kgwp_import_result', sprintf(__('Successfully imported %d users from generated data.', $this->text_domain), count($result)), 60);
+                }
+
+                else {
+                    set_transient('kgwp_import_result', __('Failed to import users from generated data.', $this->text_domain), 60);
+                }
+            }
         }
 
         // Redirect back to admin page
@@ -221,17 +258,20 @@ class AdminPages {
             } else {
                 $csv_data['error'] = __('Failed to open users.csv', KGWP_USERGENIMP_SLUG);
             }
-        }
-        else {
+        } else {
             $csv_data['error'] = __('users.csv not found.', KGWP_USERGENIMP_SLUG);
         }
 
         // Template variables
         $users_import_data = $csv_data;
         $generated_users = get_transient('kgwp_generated_users');
+        $import_result = get_transient('kgwp_import_result');
 
         // Render template
         include KGWP_USERGENIMP_PLUGIN_PATH . 'templates/admin-page.php';
+
+        // Delete transient
+        delete_transient('kgwp_import_result');
     }
 
 
@@ -254,5 +294,4 @@ class AdminPages {
         $options = get_option('kgwp_usergenimp_options');
         echo "<input type='number' name='kgwp_usergenimp_users_amount' min='1' max='1000' value='" . esc_attr(get_option('kgwp_usergenimp_users_amount', KGWP_USERGENIMP_DEFAULT_USERS_AMOUNT)) . "' />";
     }
-
 }
