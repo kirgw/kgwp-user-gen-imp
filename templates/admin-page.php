@@ -21,10 +21,7 @@ defined('ABSPATH') || exit;
 
     <div class="wrap0">
 
-        <h2>
-            <?php esc_html_e('Import Users - reading from file: ', KGWP_USERGENIMP_SLUG); ?>
-            <?php echo KGWP_USERGENIMP_DEFAULT_USERS_FILE; ?>
-        </h2>
+        <h2><?php esc_html_e('Import Users', KGWP_USERGENIMP_SLUG); ?></h2>
 
         <?php if (!empty($import_result)) : ?>
             <div class="notice notice-success is-dismissible">
@@ -32,9 +29,55 @@ defined('ABSPATH') || exit;
             </div>
         <?php endif; ?>
 
-        <p><?php esc_html_e('Here you can import users from a users.csv file in plugin folder (feel free to edit it as needed).', KGWP_USERGENIMP_SLUG); ?></p>
+        <?php
+        // Check for upload result
+        $upload_result = get_transient('kgwp_upload_result');
+        if (!empty($upload_result)) :
+        ?>
+            <div class="notice notice-info is-dismissible">
+                <p><?php echo esc_html($upload_result); ?></p>
+            </div>
+        <?php endif; ?>
+
+        <p><?php esc_html_e('Upload your own CSV file or use the default users.csv file in the plugin folder.', KGWP_USERGENIMP_SLUG); ?></p>
+
+        <!-- File Upload Section -->
+        <div class="csv-upload-section">
+            <h3><?php esc_html_e('Upload CSV File', KGWP_USERGENIMP_SLUG); ?></h3>
+            <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" enctype="multipart/form-data">
+                <input type="hidden" name="action" value="upload_csv">
+                <?php wp_nonce_field('upload_csv_nonce', 'upload_csv_nonce'); ?>
+
+                <div class="file-upload-wrapper">
+                    <input type="file" name="csv_file" id="csv_file" accept=".csv" required>
+                    <button type="submit" class="button button-secondary"><?php esc_html_e('Upload CSV', KGWP_USERGENIMP_SLUG); ?></button>
+                </div>
+
+                <p class="description">
+                    <?php esc_html_e('CSV file should have columns: username, email, role', KGWP_USERGENIMP_SLUG); ?>
+                </p>
+            </form>
+        </div>
 
         <div class="import-section">
+
+            <h3><?php esc_html_e('CSV Data Preview', KGWP_USERGENIMP_SLUG); ?></h3>
+
+            <?php
+            // Check if we're displaying an uploaded file
+            $uploaded_file_path = get_transient('kgwp_uploaded_csv_path');
+            if ($uploaded_file_path && file_exists($uploaded_file_path)) :
+            ?>
+                <p class="current-file-info">
+                    <?php esc_html_e('Currently displaying uploaded file:', KGWP_USERGENIMP_SLUG); ?>
+                    <strong><?php echo esc_html(basename($uploaded_file_path)); ?></strong>
+                </p>
+            <?php else : ?>
+                <p class="current-file-info">
+                    <?php esc_html_e('Currently displaying default file:', KGWP_USERGENIMP_SLUG); ?>
+                    <strong><?php echo esc_html(KGWP_USERGENIMP_DEFAULT_USERS_FILE); ?></strong>
+                </p>
+            <?php endif; ?>
 
             <?php if (isset($users_import_data['error'])) : ?>
 
@@ -101,43 +144,46 @@ defined('ABSPATH') || exit;
             <h3><?php esc_html_e('Generated Users (data stored for 1 hour):', KGWP_USERGENIMP_SLUG); ?></h3>
 
             <div class="kgwp-users-table-container">
-            <table class="wp-list-table widefat fixed striped">
+                <table class="wp-list-table widefat fixed striped">
 
-                <thead>
-                    <tr>
-                        <th style="width: 50px;"><?php esc_html_e('Num', KGWP_USERGENIMP_SLUG); ?></th>
-                        <th><?php esc_html_e('Username', KGWP_USERGENIMP_SLUG); ?></th>
-                        <th><?php esc_html_e('First Name', KGWP_USERGENIMP_SLUG); ?></th>
-                        <th><?php esc_html_e('Last Name', KGWP_USERGENIMP_SLUG); ?></th>
-                        <th><?php esc_html_e('Email', KGWP_USERGENIMP_SLUG); ?></th>
-                        <th><?php esc_html_e('Role', KGWP_USERGENIMP_SLUG); ?></th>
-                    </tr>
-                </thead>
+                    <thead>
+                        <tr>
+                            <th style="width: 50px;"><?php esc_html_e('Num', KGWP_USERGENIMP_SLUG); ?></th>
+                            <th><?php esc_html_e('Username', KGWP_USERGENIMP_SLUG); ?></th>
+                            <th><?php esc_html_e('First Name', KGWP_USERGENIMP_SLUG); ?></th>
+                            <th><?php esc_html_e('Last Name', KGWP_USERGENIMP_SLUG); ?></th>
+                            <th><?php esc_html_e('Email', KGWP_USERGENIMP_SLUG); ?></th>
+                            <th><?php esc_html_e('Role', KGWP_USERGENIMP_SLUG); ?></th>
+                        </tr>
+                    </thead>
 
-                <tbody>
+                    <tbody>
 
-                    <?php if (!empty($generated_users)) : ?>
+                        <?php if (!empty($generated_users)) : ?>
 
-                        <?php $i = 1;
-                        foreach ($generated_users as $user) : ?>
+                            <?php $i = 1;
+                            foreach ($generated_users as $user) : ?>
+                                <tr>
+                                    <td><?php echo esc_html($i++); ?></td>
+                                    <td><b><?php echo esc_html($user['user_login']); ?></b></td>
+                                    <td><?php echo esc_html($user['first_name']); ?></td>
+                                    <td><?php echo esc_html($user['last_name']); ?></td>
+                                    <td><?php echo esc_html($user['user_email']); ?></td>
+                                    <td><?php echo esc_html($user['role']); ?></td>
+                                </tr>
+                            <?php endforeach; ?>
+
+                        <?php else : ?>
                             <tr>
-                                <td><?php echo esc_html($i++); ?></td>
-                                <td><b><?php echo esc_html($user['user_login']); ?></b></td>
-                                <td><?php echo esc_html($user['first_name']); ?></td>
-                                <td><?php echo esc_html($user['last_name']); ?></td>
-                                <td><?php echo esc_html($user['user_email']); ?></td>
-                                <td><?php echo esc_html($user['role']); ?></td>
+                                <td colspan="6"><?php esc_html_e('No users generated yet, or previous data expired.', KGWP_USERGENIMP_SLUG); ?></td>
                             </tr>
-                        <?php endforeach; ?>
-
-                    <?php else : ?>
-                        <tr><td colspan="6"><?php esc_html_e('No users generated yet, or previous data expired.', KGWP_USERGENIMP_SLUG); ?></td></tr>
-                    <?php endif; ?>
-                </tbody>
-            </table>
+                        <?php endif; ?>
+                    </tbody>
+                </table>
             </div>
 
-            <?php if (!empty($generated_users)) : // Add buttons for data ?>
+            <?php if (!empty($generated_users)) : // Add buttons for data
+            ?>
                 <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
                     <input type="hidden" name="action" value="import_users">
                     <input type="hidden" name="import_type" value="generated">

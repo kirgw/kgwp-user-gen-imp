@@ -72,19 +72,22 @@ class Import {
     /**
      * Import users from a CSV file
      *
-     * The CSV file should be located in the plugin directory and named "users.csv".
-     * The file should have the following columns:
+     * The CSV file should have the following columns:
      *  - username
      *  - email
      *  - role
      *
+     * @param string|null $file_path Optional custom file path. If not provided, uses the default users.csv
      * @return array An array of integers representing the IDs of the users that were successfully imported
      */
-    public static function import_from_csv() {
+    public static function import_from_csv($file_path = null) {
 
-        $file_path = KGWP_USERGENIMP_PLUGIN_PATH . 'users.csv';
+        // If no file path provided, use the default
+        if ($file_path === null) {
+            $file_path = KGWP_USERGENIMP_PLUGIN_PATH . 'users.csv';
+        }
 
-        if (self::validate_csv() === false) {
+        if (self::validate_csv($file_path) === false) {
             return false;
         }
 
@@ -161,11 +164,10 @@ class Import {
      *
      * Checks if the file exists, can be opened, has a valid header row, and contains the required fields
      *
+     * @param string $file_path Path to the CSV file
      * @return bool
      */
-    public static function validate_csv() {
-
-        $file_path = KGWP_USERGENIMP_PLUGIN_PATH . 'users.csv';
+    public static function validate_csv($file_path) {
 
         if (!file_exists($file_path)) {
             error_log('CSV Import: File not found at ' . $file_path);

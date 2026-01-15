@@ -1,49 +1,96 @@
-
 .kgwp-user-gen-imp-admin-container {
-    max-width: 850px;
-    margin-top: 3px;
-    border-top: 1px solid rgb(72, 179, 168);
-    /* border-left: 1px solid rgb(30, 124, 115); */
-    /* border-right: 3px solid rgb(30, 124, 115); */
-    border-bottom: 3px solid rgb(38, 148, 137);
-    /* margin: 0 auto; */
-    padding: 20px;
-    background: #fff;
-    /* border-radius: 20px; */
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  max-width: 850px;
+  margin-top: 3px;
+  border-top: 1px solid rgb(72, 179, 168);
+  /* border-left: 1px solid rgb(30, 124, 115); */
+  /* border-right: 3px solid rgb(30, 124, 115); */
+  border-bottom: 3px solid rgb(38, 148, 137);
+  /* margin: 0 auto; */
+  padding: 20px;
+  background: #fff;
+  /* border-radius: 20px; */
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .kgwp-users-table-container {
-    margin: 20px 0;
-    overflow-x: unset;
-    height: 500px;
-    overflow-y: scroll;
-    /* scrollable table  */
+  margin: 20px 0;
+  overflow-x: unset;
+  height: 500px;
+  overflow-y: scroll;
+  /* scrollable table  */
+}
+
+/* File Upload Section Styles */
+.csv-upload-section {
+  background: #f9f9f9;
+  padding: 15px;
+  border-radius: 5px;
+  margin-bottom: 20px;
+  border: 1px solid #ddd;
+}
+
+.csv-upload-section h3 {
+  margin-top: 0;
+  color: #23282d;
+  border-bottom: 1px solid #ddd;
+  padding-bottom: 10px;
+}
+
+.file-upload-wrapper {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin: 15px 0;
+}
+
+.file-upload-wrapper input[type="file"] {
+  flex: 1;
+  padding: 8px;
+  border: 1px solid #7e8993;
+  border-radius: 3px;
+  background: #fff;
+}
+
+.file-upload-wrapper button[type="submit"] {
+  padding: 8px 16px;
+  height: auto;
+}
+
+.current-file-info {
+  background: #fff;
+  padding: 8px 12px;
+  border-left: 3px solid #2271b1;
+  margin: 10px 0;
+  font-style: italic;
+}
+
+.current-file-info strong {
+  font-style: normal;
+  color: #2271b1;
 }
 
 .kgwp-users-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin: 10px 0;
+  width: 100%;
+  border-collapse: collapse;
+  margin: 10px 0;
 }
 
 .kgwp-users-table th,
 .kgwp-users-table td {
-    padding: 8px 12px;
-    border: 1px solid #ddd;
-    text-align: left;
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  text-align: left;
 }
 
 .kgwp-users-table tr:nth-child(even) {
-    background-color: #f9f9f9;
+  background-color: #f9f9f9;
 }
 
 .kgwp-users-table tr:hover {
-    background-color: #f1f1f1;
+  background-color: #f1f1f1;
 }
 
 .kgwp-users-table th {
-    background-color: #f0f0f0;
-    font-weight: bold;
+  background-color: #f0f0f0;
+  font-weight: bold;
 }
-

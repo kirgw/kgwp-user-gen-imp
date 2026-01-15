@@ -62,6 +62,7 @@ class AdminPages {
 
         add_action('admin_post_import_users', array($this, 'handle_import_users'));
         add_action('admin_post_generate_users', array($this, 'handle_generate_users'));
+        add_action('admin_post_upload_csv', array($this, 'handle_csv_upload'));
     }
 
 
@@ -84,40 +85,41 @@ class AdminPages {
                 if (!isset($_POST['import_nonce']) || !wp_verify_nonce($_POST['import_nonce'], 'import_csv_nonce')) {
                     wp_die('Security check failed');
                 }
-            }
-
-            elseif ($import_type === 'generated') {
+            } elseif ($import_type === 'generated') {
                 if (!isset($_POST['import_nonce']) || !wp_verify_nonce($_POST['import_nonce'], 'import_generated_nonce')) {
                     wp_die('Security check failed');
                 }
-            }
-
-            else {
+            } else {
                 wp_die('Invalid import type');
             }
 
             $import = new \KGWP\UserGenImp\Inc\Import();
-            $result = $import->launch($import_type);
+
+            // Check if we should use an uploaded file for CSV import
+            if ($import_type === 'csv') {
+                $uploaded_file_path = get_transient('kgwp_uploaded_csv_path');
+                if ($uploaded_file_path) {
+                    $result = $import->import_from_csv($uploaded_file_path);
+                } else {
+                    $result = $import->launch($import_type);
+                }
+            } else {
+                $result = $import->launch($import_type);
+            }
 
             // Store the result in a transient
             if ($import_type === 'csv') {
 
                 if (is_array($result)) {
                     set_transient('kgwp_import_result', sprintf(__('Successfully imported %d users from CSV.', $this->text_domain), count($result)), 60);
-                }
-
-                else {
+                } else {
                     set_transient('kgwp_import_result', __('Failed to import users from CSV.', $this->text_domain), 60);
                 }
-            }
-
-            elseif ($import_type === 'generated') {
+            } elseif ($import_type === 'generated') {
 
                 if (is_array($result)) {
                     set_transient('kgwp_import_result', sprintf(__('Successfully imported %d users from generated data.', $this->text_domain), count($result)), 60);
-                }
-
-                else {
+                } else {
                     set_transient('kgwp_import_result', __('Failed to import users from generated data.', $this->text_domain), 60);
                 }
             }
@@ -152,6 +154,96 @@ class AdminPages {
         // Redirect back to admin page
         wp_safe_redirect(admin_url('options-general.php?page=' . $this->menu_slug));
         exit;
+    }
+
+    /**
+     * Handle CSV file upload
+     *
+     * @return void
+     */
+    public function handle_csv_upload() {
+        // Check nonce
+        if (!isset($_POST['upload_csv_nonce']) || !wp_verify_nonce($_POST['upload_csv_nonce'], 'upload_csv_nonce')) {
+            wp_die('Security check failed');
+        }
+
+        // Check if file was uploaded
+        if (!isset($_FILES['csv_file']) || empty($_FILES['csv_file']['name'])) {
+            set_transient('kgwp_upload_result', __('Please select a CSV file to upload.', $this->text_domain), 60);
+            wp_safe_redirect(admin_url('options-general.php?page=' . $this->menu_slug));
+            exit;
+        }
+
+        $uploaded_file = $_FILES['csv_file'];
+
+        // Check for upload errors
+        if ($uploaded_file['error'] !== UPLOAD_ERR_OK) {
+            set_transient('kgwp_upload_result', __('Error uploading file: ' . $this->get_upload_error_message($uploaded_file['error']), $this->text_domain), 60);
+            wp_safe_redirect(admin_url('options-general.php?page=' . $this->menu_slug));
+            exit;
+        }
+
+        // Check file extension
+        $file_info = pathinfo($uploaded_file['name']);
+        if (strtolower($file_info['extension']) !== 'csv') {
+            set_transient('kgwp_upload_result', __('Only CSV files are allowed.', $this->text_domain), 60);
+            wp_safe_redirect(admin_url('options-general.php?page=' . $this->menu_slug));
+            exit;
+        }
+
+        // Create uploads directory if it doesn't exist
+        $upload_dir = KGWP_USERGENIMP_PLUGIN_PATH . 'uploads/';
+        if (!file_exists($upload_dir)) {
+            wp_mkdir_p($upload_dir);
+        }
+
+        // Move uploaded file to plugin uploads directory
+        $destination = $upload_dir . 'uploaded_' . time() . '_' . sanitize_file_name($uploaded_file['name']);
+
+        if (move_uploaded_file($uploaded_file['tmp_name'], $destination)) {
+            // Validate the CSV file
+            if (\KGWP\UserGenImp\Inc\Import::validate_csv($destination)) {
+                // Store the uploaded file path in a transient for immediate use
+                set_transient('kgwp_uploaded_csv_path', $destination, 3600);
+                set_transient('kgwp_upload_result', __('File uploaded successfully! You can now import users from this file.', $this->text_domain), 60);
+            } else {
+                // Delete invalid file
+                unlink($destination);
+                set_transient('kgwp_upload_result', __('Invalid CSV file format. Please check the required columns: username, email, role.', $this->text_domain), 60);
+            }
+        } else {
+            set_transient('kgwp_upload_result', __('Failed to move uploaded file.', $this->text_domain), 60);
+        }
+
+        // Redirect back to admin page
+        wp_safe_redirect(admin_url('options-general.php?page=' . $this->menu_slug));
+        exit;
+    }
+
+    /**
+     * Get upload error message
+     *
+     * @param int $error_code
+     * @return string
+     */
+    private function get_upload_error_message($error_code) {
+        switch ($error_code) {
+            case UPLOAD_ERR_INI_SIZE:
+            case UPLOAD_ERR_FORM_SIZE:
+                return __('The uploaded file exceeds the maximum file size.');
+            case UPLOAD_ERR_PARTIAL:
+                return __('The uploaded file was only partially uploaded.');
+            case UPLOAD_ERR_NO_FILE:
+                return __('No file was uploaded.');
+            case UPLOAD_ERR_NO_TMP_DIR:
+                return __('Missing temporary folder.');
+            case UPLOAD_ERR_CANT_WRITE:
+                return __('Failed to write file to disk.');
+            case UPLOAD_ERR_EXTENSION:
+                return __('File upload stopped by extension.');
+            default:
+                return __('Unknown upload error.');
+        }
     }
 
 
@@ -244,23 +336,8 @@ class AdminPages {
      */
     public function render_admin_page_settings() {
 
-        // Read users.csv
-        $csv_data = [];
-        $file_path = KGWP_USERGENIMP_PLUGIN_PATH . 'users.csv';
-
-        if (file_exists($file_path)) {
-            $file = fopen($file_path, 'r');
-            if ($file) {
-                while (($line = fgetcsv($file)) !== false) {
-                    $csv_data[] = $line;
-                }
-                fclose($file);
-            } else {
-                $csv_data['error'] = __('Failed to open users.csv', KGWP_USERGENIMP_SLUG);
-            }
-        } else {
-            $csv_data['error'] = __('users.csv not found.', KGWP_USERGENIMP_SLUG);
-        }
+        // Prepare CSV data for display
+        $csv_data = $this->prepare_csv_data_for_display();
 
         // Template variables
         $users_import_data = $csv_data;
@@ -270,8 +347,57 @@ class AdminPages {
         // Render template
         include KGWP_USERGENIMP_PLUGIN_PATH . 'templates/admin-page.php';
 
-        // Delete transient
+        // Delete transients
         delete_transient('kgwp_import_result');
+        delete_transient('kgwp_upload_result');
+    }
+
+    /**
+     * Prepare CSV data for display
+     *
+     * Checks for uploaded files first, then falls back to default users.csv
+     *
+     * @return array
+     */
+    private function prepare_csv_data_for_display() {
+
+        // Check if we have an uploaded file to display
+        $uploaded_file_path = get_transient('kgwp_uploaded_csv_path');
+
+        if ($uploaded_file_path && file_exists($uploaded_file_path)) {
+            return $this->read_csv_file($uploaded_file_path);
+        }
+
+        // Fall back to default users.csv
+        $file_path = KGWP_USERGENIMP_PLUGIN_PATH . 'users.csv';
+
+        if (file_exists($file_path)) {
+            return $this->read_csv_file($file_path);
+        } else {
+            return array('error' => __('users.csv not found.', KGWP_USERGENIMP_SLUG));
+        }
+    }
+
+    /**
+     * Read CSV file and return data for display
+     *
+     * @param string $file_path
+     * @return array
+     */
+    private function read_csv_file($file_path) {
+        $csv_data = array();
+
+        $file = fopen($file_path, 'r');
+        if ($file) {
+            while (($line = fgetcsv($file)) !== false) {
+                $csv_data[] = $line;
+            }
+            fclose($file);
+        } else {
+            $csv_data['error'] = __('Failed to open file', KGWP_USERGENIMP_SLUG);
+        }
+
+        return $csv_data;
     }
 
 
