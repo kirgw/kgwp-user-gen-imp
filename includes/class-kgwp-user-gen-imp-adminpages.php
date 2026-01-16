@@ -60,6 +60,9 @@ class AdminPages {
         // Enqueue admin styles
         add_action('admin_enqueue_scripts', array($this, 'enqueue_admin_styles'));
 
+        // Enqueue admin scripts
+        add_action('admin_enqueue_scripts', array($this, 'enqueue_admin_scripts'));
+
         add_action('admin_post_import_users', array($this, 'handle_import_users'));
         add_action('admin_post_generate_users', array($this, 'handle_generate_users'));
         add_action('admin_post_upload_csv', array($this, 'handle_csv_upload'));
@@ -147,8 +150,15 @@ class AdminPages {
         $num_users = isset($_POST['kgwp_usergenimp_users_amount']) ? absint($_POST['kgwp_usergenimp_users_amount']) : KGWP_USERGENIMP_DEFAULT_USERS_AMOUNT;
         update_option('kgwp_usergenimp_users_amount', $num_users);
 
+        // Get selected roles if provided
+        $selected_roles = isset($_POST['kgwp_usergenimp_selected_roles']) ? array_map('sanitize_text_field', $_POST['kgwp_usergenimp_selected_roles']) : array();
+
+        if (!empty($selected_roles)) {
+            update_option('kgwp_usergenimp_selected_roles', $selected_roles);
+        }
+
         // Generate and store users to display
-        $generated_users = \KGWP\UserGenImp\Inc\Generate::generate_random_users($num_users);
+        $generated_users = \KGWP\UserGenImp\Inc\Generate::generate_random_users($num_users, $selected_roles);
         $generated_users_saved = set_transient('kgwp_generated_users', $generated_users, 3600);
 
         // Redirect back to admin page
@@ -268,6 +278,32 @@ class AdminPages {
                 KGWP_USERGENIMP_PLUGIN_URL . 'assets/kgwp-user-gen-imp-admin-styles.css',
                 array(),
                 KGWP_USERGENIMP_PLUGIN_VERSION
+            );
+        }
+    }
+
+    /**
+     * Enqueue admin scripts
+     *
+     * Checks admin page (containing the menu slug),
+     * loads the admin scripts for that page.
+     *
+     * @return void
+     */
+    public function enqueue_admin_scripts() {
+
+        // Check if we're on our admin page
+        $screen = get_current_screen();
+
+        // Load for all admin pages containing your menu slug (including subpages)
+        if (strpos($screen->id, $this->menu_slug) !== false) {
+
+            wp_enqueue_script(
+                'kgwp-user-gen-imp-admin',
+                KGWP_USERGENIMP_PLUGIN_URL . 'assets/kgwp-user-gen-imp-admin.js',
+                array('jquery'),
+                KGWP_USERGENIMP_PLUGIN_VERSION,
+                true
             );
         }
     }

@@ -94,3 +94,67 @@
   background-color: #f0f0f0;
   font-weight: bold;
 }
+
+/* Role Selection Styles */
+.kgwp-roles-selection {
+  background: #f9f9f9;
+  padding: 15px;
+  border-radius: 5px;
+  margin: 15px 0;
+  border: 1px solid #ddd;
+}
+
+.kgwp-roles-selection h4 {
+  margin-top: 0;
+  color: #23282d;
+  border-bottom: 1px solid #ddd;
+  padding-bottom: 10px;
+}
+
+.kgwp-role-checkbox {
+  display: block;
+  margin: 5px 0;
+  padding: 5px;
+  cursor: pointer;
+}
+
+.kgwp-role-checkbox:hover {
+  background-color: #f1f1f1;
+}
+
+.kgwp-role-checkbox input[type="checkbox"] {
+  margin-right: 8px;
+  vertical-align: middle;
+}
+
+.generate-settings {
+  background: #ffffff;
+  padding: 20px;
+  border-radius: 5px;
+  border: 1px solid #ddd;
+  margin-bottom: 20px;
+}
+
+.generate-settings label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: bold;
+}
+
+.kgwp-role-checkbox label {
+  margin-bottom: 4px;
+}
+
+.generate-settings input[type="number"] {
+  padding: 8px;
+  width: 100px;
+  margin-right: 15px;
+  border: 1px solid #7e8993;
+  border-radius: 3px;
+}
+
+#select-all-roles-container {
+  margin-top: 10px;
+  padding-top: 4px;
+  border-top: 1px solid #ddd;
+}

@@ -73,14 +73,47 @@ class Generate {
 
 
     /**
-     * Generate one random user
+     * Get all available WordPress roles
      *
      * @return array
      */
-    public static function generate_random_user() {
+    public static function get_available_roles() {
+        global $wp_roles;
 
-        // Sample roles list
-        $roles = array('subscriber', 'editor', 'author');
+        if (!isset($wp_roles)) {
+            $wp_roles = new \WP_Roles();
+        }
+
+        $roles = $wp_roles->get_names();
+
+        // Filter out roles that shouldn't be assignable to users
+        $excluded_roles = array('administrator'); // Exclude admin role for security
+
+        foreach ($excluded_roles as $excluded_role) {
+            unset($roles[$excluded_role]);
+        }
+
+        return $roles;
+    }
+
+    /**
+     * Generate one random user
+     *
+     * @param array $available_roles Optional array of roles to choose from
+     * @return array
+     */
+    public static function generate_random_user($available_roles = null) {
+
+        // Get available roles if not provided
+        if ($available_roles === null) {
+            $available_roles = self::get_available_roles();
+            $available_roles = array_keys($available_roles); // Get role keys
+        }
+
+        // If we still don't have roles, fall back to default 3
+        if (empty($available_roles)) {
+            $available_roles = array('subscriber', 'editor', 'author');
+        }
 
         // Generate name and email
         $name = self::generate_random_name();
@@ -100,7 +133,7 @@ class Generate {
             'user_email' => $email,
             'first_name' => $first_name,
             'last_name'  => $last_name,
-            'role'       => $roles[rand(0, (count($roles) - 1))],
+            'role'       => $available_roles[rand(0, (count($available_roles) - 1))],
         );
 
         // Apply filter to allow modification of user data
@@ -112,15 +145,16 @@ class Generate {
      * Generate multiple random users
      *
      * @param mixed $amount
+     * @param array $available_roles Optional array of roles to choose from
      * @return array $users_data
      */
-    public static function generate_random_users($amount = 3) {
+    public static function generate_random_users($amount = 3, $available_roles = null) {
 
         $users_data = array();
 
         // Iterate $amount times and create array of user data
         for ($i = 1; $i <= $amount; $i++) {
-            $users_data[] = self::generate_random_user();
+            $users_data[] = self::generate_random_user($available_roles);
         }
 
         return $users_data;

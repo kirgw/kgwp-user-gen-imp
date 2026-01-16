@@ -136,9 +136,39 @@ defined('ABSPATH') || exit;
                 <input type="hidden" name="action" value="generate_users">
                 <?php wp_nonce_field('generate_users_nonce', 'generate_nonce'); ?>
 
-                <label for="num-users"><?php esc_html_e('Number of users to generate:', KGWP_USERGENIMP_SLUG); ?></label>
-                <input type="number" id="num-users" name="kgwp_usergenimp_users_amount" value="<?php echo esc_attr(get_option('kgwp_usergenimp_users_amount', 10)); ?>">
-                <button type="submit" class="button button-primary button-large" name="generate_users"><?php esc_html_e('Generate', KGWP_USERGENIMP_SLUG); ?></button>
+                <div class="generate-settings">
+                    <label for="num-users"><?php esc_html_e('Number of users to generate:', KGWP_USERGENIMP_SLUG); ?></label>
+                    <input type="number" id="num-users" name="kgwp_usergenimp_users_amount" value="<?php echo esc_attr(get_option('kgwp_usergenimp_users_amount', 10)); ?>">
+                    <br><br>
+
+                    <!-- Role selection field -->
+                    <div class="kgwp-roles-selection">
+                        <h4><?php esc_html_e('User Roles', KGWP_USERGENIMP_SLUG); ?></h4>
+                        <p class="description"><?php esc_html_e('Select which roles should be used when generating users.', KGWP_USERGENIMP_SLUG); ?></p>
+
+                        <?php
+                        $available_roles = \KGWP\UserGenImp\Inc\Generate::get_available_roles();
+                        $selected_roles = get_option('kgwp_usergenimp_selected_roles', array());
+
+                        foreach ($available_roles as $role_key => $role_name) {
+                            $checked = in_array($role_key, $selected_roles) ? 'checked="checked"' : '';
+                            echo '<label class="kgwp-role-checkbox">';
+                            echo '<input type="checkbox" name="kgwp_usergenimp_selected_roles[]" value="' . esc_attr($role_key) . '" ' . $checked . '> ';
+                            echo esc_html($role_name);
+                            echo '</label>';
+                        }
+                        ?>
+
+                        <div id="select-all-roles-container">
+                            <label class="kgwp-role-checkbox">
+                                <input type="checkbox" id="select-all-roles"> <?php esc_html_e('Select/Deselect All', KGWP_USERGENIMP_SLUG); ?>
+                            </label>
+                        </div>
+
+                    </div>
+
+                    <button type="submit" class="button button-primary button-large" name="generate_users"><?php esc_html_e('Generate', KGWP_USERGENIMP_SLUG); ?></button>
+                </div>
             </form>
 
             <h3><?php esc_html_e('Generated Users (data stored for 1 hour):', KGWP_USERGENIMP_SLUG); ?></h3>
