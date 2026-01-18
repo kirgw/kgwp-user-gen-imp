@@ -133,7 +133,17 @@ defined('ABSPATH') || exit;
                 <input type="hidden" name="action" value="import_users">
                 <input type="hidden" name="import_type" value="csv">
                 <?php wp_nonce_field('import_csv_nonce', 'import_nonce'); ?>
-                <input type="submit" class="button button-primary button-hero" value="<?php esc_html_e('Import from CSV', KGWP_USERGENIMP_SLUG); ?>">
+                <?php
+                // Calculate CSV user count (subtract 1 for header row)
+                $csv_user_count = 0;
+                if (is_array($users_import_data) && !empty($users_import_data)) {
+                    // If we have a header row, subtract 1
+                    if (isset($users_import_data[0]) && is_array($users_import_data[0])) {
+                        $csv_user_count = max(0, count($users_import_data) - 1);
+                    }
+                }
+                ?>
+                <input type="submit" class="button button-primary button-hero" value="<?php esc_html_e('Import from CSV', KGWP_USERGENIMP_SLUG); ?>" data-user-count="<?php echo esc_attr($csv_user_count); ?>">
             </form>
 
             <br>
@@ -233,7 +243,7 @@ defined('ABSPATH') || exit;
                     <input type="hidden" name="action" value="import_users">
                     <input type="hidden" name="import_type" value="generated">
                     <?php wp_nonce_field('import_generated_nonce', 'import_nonce'); ?>
-                    <input type="submit" class="button button-primary button-hero" value="<?php esc_html_e('Import from generated', KGWP_USERGENIMP_SLUG); ?>">
+                    <input type="submit" class="button button-primary button-hero" value="<?php esc_html_e('Import from generated', KGWP_USERGENIMP_SLUG); ?>" data-user-count="<?php echo esc_attr(count($generated_users)); ?>">
                 </form>
             <?php endif; ?>
 

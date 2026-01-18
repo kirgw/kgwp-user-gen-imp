@@ -35,20 +35,33 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Import form confirmation
-    const importForms = document.querySelectorAll('form[action*="admin-post.php"][action*="import_users"]');
-    importForms.forEach(form => {
-        form.addEventListener('submit', (e) => {
-            const importType = form.querySelector('input[name="import_type"]').value;
-            let confirmationMessage = 'Are you sure you want to import users?';
+    const importForms = document.querySelectorAll('form[action*="admin-post.php"] input[name="action"][value="import_users"]');
+    console.log('KG WP : import_users');
+    importForms.forEach(input => {
+        const form = input.closest('form');
+        if (form) {
+            form.addEventListener('submit', (e) => {
+                const importType = form.querySelector('input[name="import_type"]').value;
+                const submitButton = form.querySelector('input[type="submit"]');
+                const userCount = submitButton ? submitButton.getAttribute('data-user-count') : 0;
+                console.log('KG WP : import_users 2');
+                let confirmationMessage = 'Are you sure? This will import ' + userCount + ' users to your site ';
 
-            if (importType === 'csv') {
-                confirmationMessage = 'Are you sure you want to import users from the CSV file?';
-            } else if (importType === 'generated') {
-                confirmationMessage = 'Are you sure you want to import the generated users?';
-            }
+                if (importType === 'csv') {
+                    confirmationMessage += ' from the CSV file.';
+                } else if (importType === 'generated') {
+                    confirmationMessage += ' from the generated users list.';
+                }
 
-            return confirm(confirmationMessage);
-        });
+                const userConfirmed = confirm(confirmationMessage);
+                if (!userConfirmed) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    return false;
+                }
+                return true;
+            });
+        }
     });
 
     // File input styling
