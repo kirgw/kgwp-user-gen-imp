@@ -129,14 +129,18 @@ class Import {
      * @param string $username The username of the user to insert
      * @param string $email The email of the user to insert
      * @param string $role The role of the user to insert
+     * @param string $first_name The first name of the user to insert
+     * @param string $last_name The last name of the user to insert
      *
      * @return int|false The ID of the inserted user, or false on failure
      */
-    private static function insert_single_user_in_db($username, $email, $role) {
+    private static function insert_single_user_in_db($username, $email, $role, $first_name = '', $last_name = '') {
 
         $username = sanitize_text_field($username);
         $email = sanitize_email($email);
         $role = sanitize_text_field($role);
+        $first_name = sanitize_text_field($first_name);
+        $last_name = sanitize_text_field($last_name);
 
         if (username_exists($username) || email_exists($email)) {
             error_log("CSV Import: User already exists: username=$username, email=$email");
@@ -148,6 +152,8 @@ class Import {
             'user_email' => $email,
             'role' => $role,
             'user_pass' => wp_generate_password(12, false), // Generate a random password
+            'first_name' => $first_name,
+            'last_name' => $last_name,
         );
 
         $user_id = wp_insert_user($userdata);
@@ -355,12 +361,14 @@ class Import {
             $username = $user_data['username'];
             $email = $user_data['email'];
             $role = $user_data['role'];
+            $first_name = isset($user_data['first_name']) ? $user_data['first_name'] : '';
+            $last_name = isset($user_data['last_name']) ? $user_data['last_name'] : '';
 
             if (username_exists($username) || email_exists($email)) {
                 continue;
             }
 
-            $user_id = self::insert_single_user_in_db($username, $email, $role);
+            $user_id = self::insert_single_user_in_db($username, $email, $role, $first_name, $last_name);
 
             if ($user_id) {
                 $imported[] = $user_id;
