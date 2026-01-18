@@ -212,14 +212,23 @@ class AdminPages {
 
         if (move_uploaded_file($uploaded_file['tmp_name'], $destination)) {
             // Validate the CSV file
-            if (\KGWP\UserGenImp\Inc\Import::validate_csv($destination)) {
+            $validation_result = \KGWP\UserGenImp\Inc\Import::validate_csv($destination);
+
+            if (!is_wp_error($validation_result)) {
                 // Store the uploaded file path in a transient for immediate use
                 set_transient('kgwp_uploaded_csv_path', $destination, 3600);
                 set_transient('kgwp_upload_result', __('File uploaded successfully! You can now import users from this file.', $this->text_domain), 60);
             } else {
                 // Delete invalid file
                 unlink($destination);
-                set_transient('kgwp_upload_result', __('Invalid CSV file format. Please check the required columns: username, email, role.', $this->text_domain), 60);
+                $error_messages = $validation_result->get_error_messages();
+                $error_message_html = __('Invalid CSV file format. Please fix the following issues:', $this->text_domain) . '<br><br>';
+                $error_message_html .= '<ul>';
+                foreach ($error_messages as $error) {
+                    $error_message_html .= '<li>' . esc_html($error) . '</li>';
+                }
+                $error_message_html .= '</ul>';
+                set_transient('kgwp_upload_result', $error_message_html, 60);
             }
         } else {
             set_transient('kgwp_upload_result', __('Failed to move uploaded file.', $this->text_domain), 60);

@@ -87,7 +87,9 @@ class Import {
             $file_path = KGWP_USERGENIMP_PLUGIN_PATH . 'users.csv';
         }
 
-        if (self::validate_csv($file_path) === false) {
+        $validation_result = self::validate_csv($file_path);
+        if (is_wp_error($validation_result)) {
+            error_log('CSV Import Validation Error: ' . $validation_result->get_error_message());
             return false;
         }
 
@@ -162,40 +164,141 @@ class Import {
     /**
      * Validate a CSV file
      *
-     * Checks if the file exists, can be opened, has a valid header row, and contains the required fields
+     * Checks if the file exists, can be opened, has a valid header row, contains the required fields,
+     * and validates the data format of each row
      *
      * @param string $file_path Path to the CSV file
-     * @return bool
+     * @return array|bool Returns true if validation passes, or array of error messages if validation fails
      */
-    public static function validate_csv($file_path) {
+    public static function validate_csv(string $file_path): true|\WP_Error {
 
+        // Sanitize the file path, though it should be internal.
+        $file_path = sanitize_text_field($file_path);
+
+        // Check if file exists
         if (!file_exists($file_path)) {
-            error_log('CSV Import: File not found at ' . $file_path);
-            return false;
+            return new \WP_Error(
+                'kgwp_usergenimp_csv_error',
+                sprintf(__('CSV file not found at: %s', 'kgwp-user-gen-imp'), esc_html($file_path))
+            );
         }
 
+        // Check if file can be opened
         $file = fopen($file_path, 'r');
         if (!$file) {
-            error_log('CSV Import: Could not open file at ' . $file_path);
-            fclose($file); // Close file before returning
-            return false;
+            return new \WP_Error(
+                'kgwp_usergenimp_csv_error',
+                sprintf(__('Could not open CSV file at: %s', 'kgwp-user-gen-imp'), esc_html($file_path))
+            );
         }
 
+        // Check if header row can be read
         $header = fgetcsv($file);
+        if ($header === false) {
+            fclose($file);
+            return new \WP_Error(
+                'kgwp_usergenimp_csv_error',
+                __('Could not read header row from CSV file. The file may be empty or corrupted.', 'kgwp-user-gen-imp')
+            );
+        }
+
+        // Validate required fields in header
+        $required_fields = array('username', 'email', 'role');
+        $missing_fields = array();
+
+        foreach ($required_fields as $field) {
+            if (!in_array($field, $header)) {
+                $missing_fields[] = $field;
+            }
+        }
+
+        if (!empty($missing_fields)) {
+            fclose($file);
+            return new \WP_Error(
+                'kgwp_usergenimp_csv_error',
+                sprintf(__('Missing required columns in CSV header: %s', 'kgwp-user-gen-imp'), esc_html(implode(', ', $missing_fields)))
+            );
+        }
+
+        // Get column indices for required fields
+        $username_index = array_search('username', $header);
+        $email_index = array_search('email', $header);
+        $role_index = array_search('role', $header);
+
+        // Pre-fetch all available WordPress roles for performance
+        $available_roles = wp_roles()->get_names();
+
+        // Validate data rows
+        $row_number = 2; // Start from row 2 (row 1 is header)
+        $max_errors = 10; // Limit number of row errors to report
+        $row_error_count = 0;
+        $errors = array(); // Collect errors in an array for WP_Error
+
+        while (($data = fgetcsv($file)) !== false && $row_error_count < $max_errors) {
+            $row_number++;
+
+            // Check if row has enough columns to access required fields
+            if (
+                !isset($data[$username_index]) ||
+                !isset($data[$email_index]) ||
+                !isset($data[$role_index])
+            ) {
+                $errors[] = sprintf(
+                    __('Row %d: Insufficient columns or missing data for required fields (username, email, role).', 'kgwp-user-gen-imp'),
+                    $row_number
+                );
+                $row_error_count++;
+                continue;
+            }
+
+            $username = trim($data[$username_index]);
+            $email = trim($data[$email_index]);
+            $role = trim($data[$role_index]);
+
+            // Validate username
+            if (empty($username)) {
+                $errors[] = sprintf(__('Row %d: Username is empty.', 'kgwp-user-gen-imp'), $row_number);
+                $row_error_count++;
+            } elseif (!preg_match('/^[a-zA-Z0-9_]+$/', $username)) {
+                $errors[] = sprintf(__('Row %d: Username "%s" contains invalid characters. Only letters, numbers, and underscores are allowed.', 'kgwp-user-gen-imp'), $row_number, esc_html($username));
+                $row_error_count++;
+            } elseif (strlen($username) < 4) {
+                $errors[] = sprintf(__('Row %d: Username "%s" is too short. Minimum 4 characters required.', 'kgwp-user-gen-imp'), $row_number, esc_html($username));
+                $row_error_count++;
+            }
+
+            // Validate email
+            if (empty($email)) {
+                $errors[] = sprintf(__('Row %d: Email is empty.', 'kgwp-user-gen-imp'), $row_number);
+                $row_error_count++;
+            } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                $errors[] = sprintf(__('Row %d: Invalid email format: "%s".', 'kgwp-user-gen-imp'), $row_number, esc_html($email));
+                $row_error_count++;
+            }
+
+            // Validate role
+            if (empty($role)) {
+                $errors[] = sprintf(__('Row %d: Role is empty.', 'kgwp-user-gen-imp'), $row_number);
+                $row_error_count++;
+            } elseif (!array_key_exists($role, $available_roles)) {
+                $errors[] = sprintf(__('Row %d: Invalid WordPress role: "%s". Available roles: %s', 'kgwp-user-gen-imp'), $row_number, esc_html($role), esc_html(implode(', ', array_keys($available_roles))));
+                $row_error_count++;
+            }
+        }
+
         fclose($file);
 
-        if ($header === false) {
-            error_log('CSV Import: Could not read header row from ' . $file_path);
-            return false;
+        // If we found row errors but there might be more, add a note
+        if ($row_error_count >= $max_errors) {
+            $errors[] = sprintf(__('Validation stopped after %d errors. Please fix these issues and re-upload the file.', 'kgwp-user-gen-imp'), $max_errors);
         }
 
-        $required_fields = array('username', 'email', 'role');
-        foreach ($required_fields as $field) {
-
-            if (!in_array($field, $header)) {
-                error_log('CSV Import: Missing required field "' . $field . '" in header row of ' . $file_path);
-                return false;
+        if (!empty($errors)) {
+            $wp_error = new \WP_Error('kgwp_usergenimp_csv_validation_errors', __('CSV validation failed.', 'kgwp-user-gen-imp'));
+            foreach ($errors as $error) {
+                $wp_error->add('kgwp_usergenimp_csv_validation_errors', $error);
             }
+            return $wp_error;
         }
 
         return true;

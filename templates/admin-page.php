@@ -35,7 +35,7 @@ defined('ABSPATH') || exit;
         if (!empty($upload_result)) :
         ?>
             <div class="notice notice-info is-dismissible">
-                <p><?php echo esc_html($upload_result); ?></p>
+                <?php echo wp_kses_post($upload_result); ?>
             </div>
         <?php endif; ?>
 
@@ -95,19 +95,34 @@ defined('ABSPATH') || exit;
                     <table class="wp-list-table widefat fixed striped">
                         <thead>
                             <tr>
-                                <?php foreach (array_shift($users_import_data) as $cell) : ?>
-                                    <th><?php echo esc_html($cell); ?></th>
-                                <?php endforeach; ?>
+                                <?php
+                                // Check if $users_import_data is an array and not empty before array_shift
+                                if (is_array($users_import_data) && !empty($users_import_data)) {
+                                    $header_row = array_shift($users_import_data);
+                                    foreach ($header_row as $cell) : ?>
+                                        <th><?php echo esc_html($cell); ?></th>
+                                    <?php endforeach;
+                                } else { ?>
+                                    <th><?php esc_html_e('No data available or invalid CSV format.', KGWP_USERGENIMP_SLUG); ?></th>
+                                <?php } ?>
                             </tr>
                         </thead>
                         <tbody>
-                            <?php foreach ($users_import_data as $line) : ?>
+                            <?php
+                            // Ensure $users_import_data is an array before iterating
+                            if (is_array($users_import_data)) :
+                                foreach ($users_import_data as $line) : ?>
+                                    <tr>
+                                        <?php foreach ($line as $cell) : ?>
+                                            <td><?php echo esc_html($cell); ?></td>
+                                        <?php endforeach; ?>
+                                    </tr>
+                                <?php endforeach;
+                            else : ?>
                                 <tr>
-                                    <?php foreach ($line as $cell) : ?>
-                                        <td><?php echo esc_html($cell); ?></td>
-                                    <?php endforeach; ?>
+                                    <td colspan="3"><?php esc_html_e('No user data to display.', KGWP_USERGENIMP_SLUG); ?></td>
                                 </tr>
-                            <?php endforeach; ?>
+                            <?php endif; ?>
                         </tbody>
                     </table>
                 </div>
