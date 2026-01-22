@@ -127,13 +127,23 @@ class Generate {
         // Generate password
         $password = wp_generate_password(12, false);
 
+        // Generate bio
+        if (! isset(self::$names_data)) {
+            self::load_names_data();
+        }
+
+        $bio_templates = self::$names_data['bio_templates'];
+        $bio_template = $bio_templates[array_rand($bio_templates)];
+        $bio = sprintf($bio_template, $username);
+
         $user_data = array(
             'user_login' => $username,
             'user_pass'  => $password,
             'user_email' => $email,
             'first_name' => $first_name,
             'last_name'  => $last_name,
-            'role'       => $available_roles[rand(0, (count($available_roles) - 1))],
+            'role'       => $available_roles[array_rand($available_roles)],
+            'description' => $bio, // WordPress uses 'description' field for user bios
         );
 
         // Apply filter to allow modification of user data
