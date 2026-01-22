@@ -158,7 +158,8 @@ class AdminPages {
         }
 
         // Generate and store users to display
-        $generated_users = \KGWP\UserGenImp\Inc\Generate::generate_random_users($num_users, $selected_roles);
+        $generate = new \KGWP\UserGenImp\Inc\Generate();
+        $generated_users = $generate->generate_random_users($num_users, $selected_roles);
         $generated_users_saved = set_transient('kgwp_generated_users', $generated_users, 3600);
 
         // Redirect back to admin page
