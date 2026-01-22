@@ -158,3 +158,21 @@
   padding-top: 4px;
   border-top: 1px solid #ddd;
 }
+
+/* Generated Users Actions Styles */
+.generated-users-actions {
+  display: flex;
+  gap: 15px;
+  margin: 20px 0;
+  flex-wrap: wrap;
+}
+
+.generated-users-actions form {
+  flex: 1;
+  min-width: 200px;
+}
+
+.generated-users-actions .button {
+  width: 100%;
+  justify-content: center;
+}

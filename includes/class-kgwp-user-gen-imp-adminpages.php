@@ -42,8 +42,8 @@ class AdminPages {
 
         $this->settings_pages = [
             'main' => [
-                'page_title' => __('KG WP Users Generation & Import', $this->text_domain),
-                'menu_title' => __('Users Gen & Import', $this->text_domain),
+                'page_title' => 'KG WP Users Generation & Import',
+                'menu_title' => 'Users Gen & Import',
                 'capability' => $this->menu_capability,
                 'menu_slug'  => $this->menu_slug,
                 'callback'   => 'render_admin_page_settings',
@@ -66,6 +66,7 @@ class AdminPages {
         add_action('admin_post_import_users', array($this, 'handle_import_users'));
         add_action('admin_post_generate_users', array($this, 'handle_generate_users'));
         add_action('admin_post_upload_csv', array($this, 'handle_csv_upload'));
+        add_action('admin_post_download_generated_csv', array($this, 'handle_download_generated_csv'));
     }
 
 
@@ -241,6 +242,76 @@ class AdminPages {
     }
 
     /**
+     * Handle CSV download for generated users
+     *
+     * @return void
+     */
+    public function handle_download_generated_csv() {
+        // Check nonce
+        if (!isset($_POST['download_csv_nonce']) || !wp_verify_nonce($_POST['download_csv_nonce'], 'download_generated_csv_nonce')) {
+            wp_die('Security check failed');
+        }
+
+        // Get generated users from transient
+        $generated_users = get_transient('kgwp_generated_users');
+
+        if (empty($generated_users)) {
+            wp_die('No generated users found to download.');
+        }
+
+        // Generate CSV content
+        $csv_content = $this->generate_csv_from_users($generated_users);
+
+        // Set headers for CSV download
+        header('Content-Type: text/csv; charset=utf-8');
+        header('Content-Disposition: attachment; filename=generated_users_' . date('Y-m-d_His') . '.csv');
+        header('Pragma: no-cache');
+        header('Expires: 0');
+
+        // Output CSV content
+        echo $csv_content;
+        exit;
+    }
+
+    /**
+     * Generate CSV content from users data
+     *
+     * @param array $users
+     * @return string
+     */
+    private function generate_csv_from_users($users) {
+        // Open output buffer
+        ob_start();
+
+        // Create file pointer in memory
+        $output = fopen('php://output', 'w');
+
+        // Add CSV header
+        $header = array('username', 'first_name', 'last_name', 'email', 'role', 'password', 'bio');
+        fputcsv($output, $header);
+
+        // Add user data
+        foreach ($users as $user) {
+            $row = array(
+                isset($user['user_login']) ? $user['user_login'] : '',
+                isset($user['first_name']) ? $user['first_name'] : '',
+                isset($user['last_name']) ? $user['last_name'] : '',
+                isset($user['user_email']) ? $user['user_email'] : '',
+                isset($user['role']) ? $user['role'] : '',
+                isset($user['user_pass']) ? $user['user_pass'] : '',
+                isset($user['description']) ? $user['description'] : ''
+            );
+            fputcsv($output, $row);
+        }
+
+        // Close file pointer
+        fclose($output);
+
+        // Get the CSV content from buffer
+        return ob_get_clean();
+    }
+
+    /**
      * Get upload error message
      *
      * @param int $error_code
@@ -332,8 +403,8 @@ class AdminPages {
         $page = $this->settings_pages['main'];
 
         add_menu_page(
-            $page['page_title'],
-            $page['menu_title'],
+            __($page['page_title'], $this->text_domain),
+            __($page['menu_title'], $this->text_domain),
             $page['capability'],
             $page['menu_slug'],
             array($this, $page['callback']),

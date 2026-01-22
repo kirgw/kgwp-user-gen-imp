@@ -128,6 +128,4 @@ final class Init {
         // Restriction only for table now
         return current_user_can(self::allowed_capability());
     }
-
-
 }

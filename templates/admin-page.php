@@ -245,12 +245,20 @@ defined('ABSPATH') || exit;
 
             <?php if (!empty($generated_users)) : // Add buttons for data
             ?>
-                <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" aria-labelledby="generated-import-heading">
-                    <input type="hidden" name="action" value="import_users">
-                    <input type="hidden" name="import_type" value="generated">
-                    <?php wp_nonce_field('import_generated_nonce', 'import_nonce'); ?>
-                    <input type="submit" class="button button-primary button-hero" value="<?php esc_html_e('Import from generated', KGWP_USERGENIMP_SLUG); ?>" data-user-count="<?php echo esc_attr(count($generated_users)); ?>" aria-label="<?php esc_attr_e('Import generated users', KGWP_USERGENIMP_SLUG); ?> <?php echo esc_attr(sprintf(__('(%d users)', KGWP_USERGENIMP_SLUG), count($generated_users))); ?>">
-                </form>
+                <div class="generated-users-actions">
+                    <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" aria-labelledby="generated-import-heading">
+                        <input type="hidden" name="action" value="import_users">
+                        <input type="hidden" name="import_type" value="generated">
+                        <?php wp_nonce_field('import_generated_nonce', 'import_nonce'); ?>
+                        <input type="submit" class="button button-primary button-hero" value="<?php esc_html_e('Import from generated', KGWP_USERGENIMP_SLUG); ?>" data-user-count="<?php echo esc_attr(count($generated_users)); ?>" aria-label="<?php esc_attr_e('Import generated users', KGWP_USERGENIMP_SLUG); ?> <?php echo esc_attr(sprintf(__('(%d users)', KGWP_USERGENIMP_SLUG), count($generated_users))); ?>">
+                    </form>
+
+                    <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" aria-labelledby="generated-download-heading">
+                        <input type="hidden" name="action" value="download_generated_csv">
+                        <?php wp_nonce_field('download_generated_csv_nonce', 'download_csv_nonce'); ?>
+                        <input type="submit" class="button button-secondary button-hero" value="<?php esc_html_e('Download as CSV', KGWP_USERGENIMP_SLUG); ?>" aria-label="<?php esc_attr_e('Download generated users as CSV', KGWP_USERGENIMP_SLUG); ?> <?php echo esc_attr(sprintf(__('(%d users)', KGWP_USERGENIMP_SLUG), count($generated_users))); ?>">
+                    </form>
+                </div>
             <?php endif; ?>
 
             <br>
