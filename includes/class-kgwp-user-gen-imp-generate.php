@@ -19,17 +19,17 @@ defined('ABSPATH') || exit;
  */
 class Generate {
 
-    private static $names_data;
+    private $names_data;
 
     /**
-     * Load names data from JSON file
+     * Constructor - Load names data from JSON file
      *
      * @return void
      */
-    private static function load_names_data() {
+    public function __construct() {
         $json_path = plugin_dir_path(dirname(__FILE__)) . 'users-random-src.json';
         $json_data = file_get_contents($json_path);
-        self::$names_data = json_decode($json_data, true);
+        $this->names_data = json_decode($json_data, true);
     }
 
 
@@ -38,13 +38,9 @@ class Generate {
      *
      * @return string
      */
-    public static function generate_random_name() {
-        if (! isset(self::$names_data)) {
-            self::load_names_data();
-        }
-
-        $first_names = self::$names_data['names'];
-        $last_names = self::$names_data['lastnames'];
+    public function generate_random_name() {
+        $first_names = $this->names_data['names'];
+        $last_names = $this->names_data['lastnames'];
 
         $first_name = $first_names[array_rand($first_names)];
         $last_name = $last_names[array_rand($last_names)];
@@ -60,12 +56,8 @@ class Generate {
      * @param string $lastName
      * @return string
      */
-    public static function generate_email($firstName, $lastName) {
-        if (! isset(self::$names_data)) {
-            self::load_names_data();
-        }
-
-        $domains = self::$names_data['email_domains'];
+    public function generate_email($firstName, $lastName) {
+        $domains = $this->names_data['email_domains'];
         $domain = $domains[array_rand($domains)];
 
         return strtolower($firstName . '.' . $lastName . '@' . $domain);
@@ -102,7 +94,7 @@ class Generate {
      * @param array $available_roles Optional array of roles to choose from
      * @return array
      */
-    public static function generate_random_user($available_roles = null) {
+    public function generate_random_user($available_roles = null) {
 
         // Get available roles if not provided
         if ($available_roles === null) {
@@ -116,10 +108,10 @@ class Generate {
         }
 
         // Generate name and email
-        $name = self::generate_random_name();
+        $name = $this->generate_random_name();
         $first_name = $name['first_name'];
         $last_name  = $name['last_name'];
-        $email = self::generate_email($first_name, $last_name);
+        $email = $this->generate_email($first_name, $last_name);
 
         // Generate username
         $username = strtolower($first_name . '.' . $last_name);
@@ -128,11 +120,7 @@ class Generate {
         $password = wp_generate_password(12, false);
 
         // Generate bio
-        if (! isset(self::$names_data)) {
-            self::load_names_data();
-        }
-
-        $bio_templates = self::$names_data['bio_templates'];
+        $bio_templates = $this->names_data['bio_templates'];
         $bio_template = $bio_templates[array_rand($bio_templates)];
         $bio = sprintf($bio_template, $username);
 
@@ -158,13 +146,13 @@ class Generate {
      * @param array $available_roles Optional array of roles to choose from
      * @return array $users_data
      */
-    public static function generate_random_users($amount = 3, $available_roles = null) {
+    public function generate_random_users($amount = 3, $available_roles = null) {
 
         $users_data = array();
 
         // Iterate $amount times and create array of user data
         for ($i = 1; $i <= $amount; $i++) {
-            $users_data[] = self::generate_random_user($available_roles);
+            $users_data[] = $this->generate_random_user($available_roles);
         }
 
         return $users_data;
