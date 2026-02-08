@@ -81,6 +81,11 @@ class AdminPages {
      */
     public function handle_import_users() {
 
+        // Check capability
+        if (!current_user_can($this->menu_capability)) {
+            wp_die(__('You do not have sufficient permissions to access this page.', $this->text_domain));
+        }
+
         // Check import type
         if (isset($_POST['import_type'])) {
 
@@ -153,6 +158,11 @@ class AdminPages {
      */
     public function handle_generate_users() {
 
+        // Check capability
+        if (!current_user_can($this->menu_capability)) {
+            wp_die(__('You do not have sufficient permissions to access this page.', $this->text_domain));
+        }
+
         // Check nonce
         if (!isset($_POST['generate_nonce']) || ! wp_verify_nonce($_POST['generate_nonce'], 'generate_users_nonce')) {
             wp_die('Security check failed');
@@ -185,6 +195,11 @@ class AdminPages {
      * @return void
      */
     public function handle_csv_upload() {
+
+        // Check capability
+        if (!current_user_can($this->menu_capability)) {
+            wp_die(__('You do not have sufficient permissions to access this page.', $this->text_domain));
+        }
 
         // Check nonce
         if (!isset($_POST['upload_csv_nonce']) || !wp_verify_nonce($_POST['upload_csv_nonce'], 'upload_csv_nonce')) {
@@ -263,6 +278,11 @@ class AdminPages {
      * @return void
      */
     public function handle_download_generated_csv() {
+
+        // Check capability
+        if (!current_user_can($this->menu_capability)) {
+            wp_die(__('You do not have sufficient permissions to access this page.', $this->text_domain));
+        }
 
         // Check nonce
         if (!isset($_POST['download_csv_nonce']) || !wp_verify_nonce($_POST['download_csv_nonce'], 'download_generated_csv_nonce')) {
