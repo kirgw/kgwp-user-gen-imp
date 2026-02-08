@@ -99,20 +99,22 @@ class Import {
             return false;
         }
 
-        $header = fgetcsv($file); // Skip the header row
+        $header = fgetcsv($file);
+        if (!$header) {
+            fclose($file);
+            return false;
+        }
+
 
         $users_data = array();
         while (($data = fgetcsv($file)) !== false) {
-
-            $username = $data[0];
-            $email = $data[1];
-            $role = $data[2];
-
-            $users_data[] = array(
-                'username' => $username,
-                'email' => $email,
-                'role' => $role,
-            );
+            $user_row = array();
+            foreach ($header as $index => $column_name) {
+                if (isset($data[$index])) {
+                    $user_row[$column_name] = $data[$index];
+                }
+            }
+            $users_data[] = $user_row;
         }
 
         fclose($file);
@@ -126,40 +128,35 @@ class Import {
     /**
      * Insert a single user into the database
      *
-     * @param string $username The username of the user to insert
-     * @param string $email The email of the user to insert
-     * @param string $role The role of the user to insert
-     * @param string $first_name The first name of the user to insert
-     * @param string $last_name The last name of the user to insert
+     * @param array $user_data The user data to insert
      *
      * @return int|false The ID of the inserted user, or false on failure
      */
-    private static function insert_single_user_in_db($username, $email, $role, $first_name = '', $last_name = '') {
+    private static function insert_single_user_in_db($user_data) {
 
-        $username = sanitize_text_field($username);
-        $email = sanitize_email($email);
-        $role = sanitize_text_field($role);
-        $first_name = sanitize_text_field($first_name);
-        $last_name = sanitize_text_field($last_name);
+        $userdata = array(
+            'user_login'  => sanitize_text_field($user_data['user_login'] ?? ''),
+            'user_pass'   => $user_data['user_pass'] ?? wp_generate_password(12, false),
+            'user_email'  => sanitize_email($user_data['user_email'] ?? ''),
+            'first_name'  => sanitize_text_field($user_data['first_name'] ?? ''),
+            'last_name'   => sanitize_text_field($user_data['last_name'] ?? ''),
+            'role'        => sanitize_text_field($user_data['role'] ?? 'subscriber'),
+            'description' => sanitize_textarea_field($user_data['description'] ?? ''),
+        );
 
-        if (username_exists($username) || email_exists($email)) {
-            error_log("CSV Import: User already exists: username=$username, email=$email");
+        if (empty($userdata['user_login']) || empty($userdata['user_email'])) {
             return false;
         }
 
-        $userdata = array(
-            'user_login' => $username,
-            'user_email' => $email,
-            'role' => $role,
-            'user_pass' => wp_generate_password(12, false), // Generate a random password
-            'first_name' => $first_name,
-            'last_name' => $last_name,
-        );
+        if (username_exists($userdata['user_login']) || email_exists($userdata['user_email'])) {
+            error_log("User Import: User already exists: username={$userdata['user_login']}, email={$userdata['user_email']}");
+            return false;
+        }
 
         $user_id = wp_insert_user($userdata);
 
         if (is_wp_error($user_id)) {
-            error_log('CSV Import: Error creating user: ' . $user_id->get_error_message());
+            error_log('User Import: Error creating user: ' . $user_id->get_error_message());
             return false;
         }
 
@@ -174,7 +171,7 @@ class Import {
      * and validates the data format of each row
      *
      * @param string $file_path Path to the CSV file
-     * @return array|bool Returns true if validation passes, or array of error messages if validation fails
+     * @return true|\WP_Error Returns true if validation passes, or WP_Error if validation fails
      */
     public static function validate_csv(string $file_path): true|\WP_Error {
 
@@ -209,7 +206,7 @@ class Import {
         }
 
         // Validate required fields in header
-        $required_fields = array('username', 'email', 'role');
+        $required_fields = array('user_login', 'user_email', 'role');
         $missing_fields = array();
 
         foreach ($required_fields as $field) {
@@ -227,8 +224,8 @@ class Import {
         }
 
         // Get column indices for required fields
-        $username_index = array_search('username', $header);
-        $email_index = array_search('email', $header);
+        $username_index = array_search('user_login', $header);
+        $email_index = array_search('user_email', $header);
         $role_index = array_search('role', $header);
 
         // Pre-fetch all available WordPress roles for performance
@@ -250,7 +247,7 @@ class Import {
                 !isset($data[$role_index])
             ) {
                 $errors[] = sprintf(
-                    __('Row %d: Insufficient columns or missing data for required fields (username, email, role).', 'kgwp-user-gen-imp'),
+                    __('Row %d: Insufficient columns or missing data for required fields (user_login, user_email, role).', 'kgwp-user-gen-imp'),
                     $row_number
                 );
                 $row_error_count++;
@@ -325,28 +322,17 @@ class Import {
             return false;
         }
 
-        $users_data = array();
-        foreach ($generated_users as $user_data) {
-            $users_data[] = array(
-                'username'   => $user_data['user_login'],
-                'email'      => $user_data['user_email'],
-                'first_name' => $user_data['first_name'],
-                'last_name'  => $user_data['last_name'],
-                'role'       => $user_data['role'],
-            );
-        }
-
         // Insert the users into the database
-        return self::insert_users_in_db($users_data);
+        return self::insert_users_in_db($generated_users);
     }
 
 
     /**
      * Insert users into the database
      *
-     * @param array $users_data array of objects with properties 'name', 'email', 'role'
+     * @param array $users_data Array of user data arrays
      *
-     * @return array|false array of user IDs of the inserted users
+     * @return array|false Array of user IDs of the inserted users
      */
     public static function insert_users_in_db($users_data) {
 
@@ -357,18 +343,7 @@ class Import {
         }
 
         foreach ($users_data as $user_data) {
-
-            $username = $user_data['username'];
-            $email = $user_data['email'];
-            $role = $user_data['role'];
-            $first_name = isset($user_data['first_name']) ? $user_data['first_name'] : '';
-            $last_name = isset($user_data['last_name']) ? $user_data['last_name'] : '';
-
-            if (username_exists($username) || email_exists($email)) {
-                continue;
-            }
-
-            $user_id = self::insert_single_user_in_db($username, $email, $role, $first_name, $last_name);
+            $user_id = self::insert_single_user_in_db($user_data);
 
             if ($user_id) {
                 $imported[] = $user_id;

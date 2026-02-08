@@ -44,9 +44,13 @@ document.addEventListener('DOMContentLoaded', () => {
             form.addEventListener('submit', (e) => {
                 const importType = form.querySelector('input[name="import_type"]').value;
                 const submitButton = form.querySelector('input[type="submit"]');
-                const userCount = submitButton ? submitButton.getAttribute('data-user-count') : 0;
 
-                let confirmationMessage = 'Are you sure? This will import ' + userCount + ' users to your site ';
+                // Wrong counting, disabling for now:
+                // const userCount = submitButton ? submitButton.getAttribute('data-user-count') : 0;
+                // let confirmationMessage = 'Are you sure? This will import ' + userCount + ' users to your site ';
+
+                // Simple message
+                let confirmationMessage = 'Are you sure? This will import users to your site ';
 
                 if (importType === 'csv') {
                     confirmationMessage += ' from the CSV file.';

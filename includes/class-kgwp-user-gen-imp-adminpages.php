@@ -64,6 +64,7 @@ class AdminPages {
         // Enqueue admin scripts
         add_action('admin_enqueue_scripts', array($this, 'enqueue_admin_scripts'));
 
+        // Handlers
         add_action('admin_post_import_users', array($this, 'handle_import_users'));
         add_action('admin_post_generate_users', array($this, 'handle_generate_users'));
         add_action('admin_post_upload_csv', array($this, 'handle_csv_upload'));
@@ -90,41 +91,50 @@ class AdminPages {
                 if (!isset($_POST['import_nonce']) || !wp_verify_nonce($_POST['import_nonce'], 'import_csv_nonce')) {
                     wp_die('Security check failed');
                 }
-            } elseif ($import_type === 'generated') {
+            }
+            elseif ($import_type === 'generated') {
                 if (!isset($_POST['import_nonce']) || !wp_verify_nonce($_POST['import_nonce'], 'import_generated_nonce')) {
                     wp_die('Security check failed');
                 }
-            } else {
+            }
+            else {
                 wp_die('Invalid import type');
             }
 
             $import = new \KGWP\UserGenImp\Inc\Import();
 
-            // Check if we should use an uploaded file for CSV import
+            // 1. Check if we should use an uploaded file for CSV import
             if ($import_type === 'csv') {
+
                 $uploaded_file_path = get_transient('kgwp_uploaded_csv_path');
+
                 if ($uploaded_file_path) {
                     $result = $import->import_from_csv($uploaded_file_path);
-                } else {
+                }
+                else {
                     $result = $import->launch($import_type);
                 }
-            } else {
+            }
+            elseif ($import_type === 'generated') {
                 $result = $import->launch($import_type);
             }
 
-            // Store the result in a transient
+            // 2. Store the result in a transient
             if ($import_type === 'csv') {
 
                 if (is_array($result)) {
                     set_transient('kgwp_import_result', sprintf(__('Successfully imported %d users from CSV.', $this->text_domain), count($result)), 60);
-                } else {
+                }
+                else {
                     set_transient('kgwp_import_result', __('Failed to import users from CSV.', $this->text_domain), 60);
                 }
-            } elseif ($import_type === 'generated') {
+            }
+            elseif ($import_type === 'generated') {
 
                 if (is_array($result)) {
                     set_transient('kgwp_import_result', sprintf(__('Successfully imported %d users from generated data.', $this->text_domain), count($result)), 60);
-                } else {
+                }
+                else {
                     set_transient('kgwp_import_result', __('Failed to import users from generated data.', $this->text_domain), 60);
                 }
             }
@@ -175,6 +185,7 @@ class AdminPages {
      * @return void
      */
     public function handle_csv_upload() {
+
         // Check nonce
         if (!isset($_POST['upload_csv_nonce']) || !wp_verify_nonce($_POST['upload_csv_nonce'], 'upload_csv_nonce')) {
             wp_die('Security check failed');
@@ -214,6 +225,7 @@ class AdminPages {
         $destination = $upload_dir . 'uploaded_' . time() . '_' . sanitize_file_name($uploaded_file['name']);
 
         if (move_uploaded_file($uploaded_file['tmp_name'], $destination)) {
+
             // Validate the CSV file
             $validation_result = \KGWP\UserGenImp\Inc\Import::validate_csv($destination);
 
@@ -221,7 +233,9 @@ class AdminPages {
                 // Store the uploaded file path in a transient for immediate use
                 set_transient('kgwp_uploaded_csv_path', $destination, 3600);
                 set_transient('kgwp_upload_result', __('File uploaded successfully! You can now import users from this file.', $this->text_domain), 60);
-            } else {
+            }
+            else {
+
                 // Delete invalid file
                 unlink($destination);
                 $error_messages = $validation_result->get_error_messages();
@@ -233,7 +247,8 @@ class AdminPages {
                 $error_message_html .= '</ul>';
                 set_transient('kgwp_upload_result', $error_message_html, 60);
             }
-        } else {
+        }
+        else {
             set_transient('kgwp_upload_result', __('Failed to move uploaded file.', $this->text_domain), 60);
         }
 
@@ -248,6 +263,7 @@ class AdminPages {
      * @return void
      */
     public function handle_download_generated_csv() {
+
         // Check nonce
         if (!isset($_POST['download_csv_nonce']) || !wp_verify_nonce($_POST['download_csv_nonce'], 'download_generated_csv_nonce')) {
             wp_die('Security check failed');
@@ -281,6 +297,7 @@ class AdminPages {
      * @return string
      */
     private function generate_csv_from_users($users) {
+
         // Open output buffer
         ob_start();
 
@@ -288,18 +305,18 @@ class AdminPages {
         $output = fopen('php://output', 'w');
 
         // Add CSV header
-        $header = array('username', 'first_name', 'last_name', 'email', 'role', 'password', 'bio');
+        $header = array('user_login', 'user_pass', 'user_email', 'first_name', 'last_name', 'role', 'description');
         fputcsv($output, $header);
 
         // Add user data
         foreach ($users as $user) {
             $row = array(
                 isset($user['user_login']) ? $user['user_login'] : '',
+                isset($user['user_pass']) ? $user['user_pass'] : '',
+                isset($user['user_email']) ? $user['user_email'] : '',
                 isset($user['first_name']) ? $user['first_name'] : '',
                 isset($user['last_name']) ? $user['last_name'] : '',
-                isset($user['user_email']) ? $user['user_email'] : '',
                 isset($user['role']) ? $user['role'] : '',
-                isset($user['user_pass']) ? $user['user_pass'] : '',
                 isset($user['description']) ? $user['description'] : ''
             );
             fputcsv($output, $row);

@@ -122,7 +122,7 @@ class Generate {
         // Generate bio
         $bio_templates = $this->names_data['bio_templates'];
         $bio_template = $bio_templates[array_rand($bio_templates)];
-        $bio = sprintf($bio_template, $username);
+        $bio = sprintf($bio_template, $first_name);
 
         $user_data = array(
             'user_login' => $username,
@@ -131,10 +131,10 @@ class Generate {
             'first_name' => $first_name,
             'last_name'  => $last_name,
             'role'       => $available_roles[array_rand($available_roles)],
-            'description' => $bio, // WordPress uses 'description' field for user bios
+            'description' => $bio, // WP uses 'description' field for user bios
         );
 
-        // Apply filter to allow modification of user data
+        // Apply filter to allow modification of data
         return apply_filters('kgwp_usergenimp_generate_user_data', $user_data);
     }
 
@@ -150,7 +150,7 @@ class Generate {
 
         $users_data = array();
 
-        // Iterate $amount times and create array of user data
+        // Iterate $amount times and create array of data
         for ($i = 1; $i <= $amount; $i++) {
             $users_data[] = $this->generate_random_user($available_roles);
         }

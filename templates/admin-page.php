@@ -237,6 +237,7 @@ defined('ABSPATH') || exit;
                                     <th role="columnheader" scope="col"><?php esc_html_e('Last Name', KGWP_USERGENIMP_SLUG); ?></th>
                                     <th role="columnheader" scope="col"><?php esc_html_e('Email', KGWP_USERGENIMP_SLUG); ?></th>
                                     <th role="columnheader" scope="col"><?php esc_html_e('Role', KGWP_USERGENIMP_SLUG); ?></th>
+                                    <th role="columnheader" scope="col"><?php esc_html_e('Bio', KGWP_USERGENIMP_SLUG); ?></th>
                                 </tr>
                             </thead>
 
@@ -253,6 +254,7 @@ defined('ABSPATH') || exit;
                                             <td role="gridcell"><?php echo esc_html($user['last_name']); ?></td>
                                             <td role="gridcell"><?php echo esc_html($user['user_email']); ?></td>
                                             <td role="gridcell"><?php echo esc_html($user['role']); ?></td>
+                                            <td role="gridcell"><?php echo esc_html($user['description']); ?></td>
                                         </tr>
                                     <?php endforeach; ?>
 
