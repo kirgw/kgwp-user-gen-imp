@@ -1,9 +1,10 @@
-// assets/kgwp-user-gen-imp-admin.js
+
 document.addEventListener('DOMContentLoaded', () => {
     console.log('KG WP User Generation & Import loaded...');
 
     // File upload form submission handling
     const fileUploadForms = document.querySelectorAll('form[action*="admin-post.php"][action*="upload_csv"]');
+
     fileUploadForms.forEach(form => {
         form.addEventListener('submit', (e) => {
             const fileInput = form.querySelector('input[type="file"]');
@@ -36,7 +37,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Import form confirmation
     const importForms = document.querySelectorAll('form[action*="admin-post.php"] input[name="action"][value="import_users"]');
-    console.log('KG WP : import_users');
+
     importForms.forEach(input => {
         const form = input.closest('form');
         if (form) {
@@ -44,7 +45,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const importType = form.querySelector('input[name="import_type"]').value;
                 const submitButton = form.querySelector('input[type="submit"]');
                 const userCount = submitButton ? submitButton.getAttribute('data-user-count') : 0;
-                console.log('KG WP : import_users 2');
+
                 let confirmationMessage = 'Are you sure? This will import ' + userCount + ' users to your site ';
 
                 if (importType === 'csv') {
@@ -108,4 +109,97 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     });
+
+    // Tab switching
+    const tabButtons = document.querySelectorAll('.kgwp-tab-button');
+    const tabContents = document.querySelectorAll('.kgwp-tab-content');
+
+    if (tabButtons.length > 0 && tabContents.length > 0) {
+
+        // Save active tab to localStorage
+        const saveActiveTab = (tabId) => {
+            try {
+                localStorage.setItem('kgwpUserGenImpActiveTab', tabId);
+            } catch (e) {
+                console.error('Could not save active tab to localStorage:', e);
+            }
+        };
+
+        // Function to get active tab from localStorage
+        const getActiveTab = () => {
+            try {
+                return localStorage.getItem('kgwpUserGenImpActiveTab');
+            } catch (e) {
+                console.error('Could not get active tab from localStorage:', e);
+                return null;
+            }
+        };
+
+        // Function to activate a specific tab
+        const activateTab = (tabId) => {
+            const targetButton = document.querySelector(`[aria-controls="${tabId}"]`);
+            const targetTab = document.getElementById(tabId);
+
+            if (targetButton && targetTab) {
+                // Remove active class from all buttons and tabs
+                tabButtons.forEach(btn => {
+                    btn.classList.remove('active');
+                    btn.setAttribute('aria-selected', 'false');
+                    btn.setAttribute('tabindex', '-1');
+                });
+
+                tabContents.forEach(content => {
+                    content.classList.remove('active');
+                    content.setAttribute('hidden', '');
+                });
+
+                // Add active class to target button and tab
+                targetButton.classList.add('active');
+                targetButton.setAttribute('aria-selected', 'true');
+                targetButton.setAttribute('tabindex', '0');
+                targetTab.classList.add('active');
+                targetTab.removeAttribute('hidden');
+            }
+        };
+
+        // Check for saved active tab on page load
+        const savedActiveTab = getActiveTab();
+        if (savedActiveTab) {
+            activateTab(savedActiveTab);
+        }
+
+        tabButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                // Get the target tab ID from the button's aria-controls attribute
+                const targetTabId = button.getAttribute('aria-controls');
+                const targetTab = document.getElementById(targetTabId);
+
+                if (targetTab) {
+
+                    // Save the active tab to localStorage
+                    saveActiveTab(targetTabId);
+
+                    // Remove active class from all buttons and tabs
+                    tabButtons.forEach(btn => {
+                        btn.classList.remove('active');
+                        btn.setAttribute('aria-selected', 'false');
+                        btn.setAttribute('tabindex', '-1');
+                    });
+
+                    tabContents.forEach(content => {
+                        content.classList.remove('active');
+                        content.setAttribute('hidden', '');
+                    });
+
+                    // Add active class to clicked button and target tab
+                    button.classList.add('active');
+                    button.setAttribute('aria-selected', 'true');
+                    button.setAttribute('tabindex', '0');
+                    targetTab.classList.add('active');
+                    targetTab.removeAttribute('hidden');
+                }
+            });
+
+        });
+    }
 });

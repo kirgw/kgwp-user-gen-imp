@@ -12,6 +12,55 @@
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
+/* Tab Styles */
+.kgwp-tabs-navigation {
+  display: flex;
+  gap: 5px;
+  margin: 20px 0 10px;
+  border-bottom: 1px solid #ddd;
+}
+
+.kgwp-tab-button {
+  padding: 10px 20px;
+  background: #f1f1f1;
+  border: 1px solid #ddd;
+  border-bottom: none;
+  border-radius: 5px 5px 0 0;
+  cursor: pointer;
+  font-weight: 600;
+  color: #333;
+  transition: all 0.2s ease;
+  margin-bottom: -1px;
+}
+
+.kgwp-tab-button:hover {
+  background: #e5e5e5;
+}
+
+.kgwp-tab-button.active {
+  background: #fff;
+  border-bottom: 1px solid #fff;
+  color: #2271b1;
+  border-color: #ddd #ddd #fff;
+}
+
+.kgwp-tab-button:focus {
+  outline: 2px solid #2271b1;
+  outline-offset: -2px;
+}
+
+.kgwp-tabs-content {
+  position: relative;
+}
+
+.kgwp-tab-content {
+  padding: 15px 0;
+}
+
+.kgwp-tab-content:not(.active) {
+  display: none;
+}
+
 .kgwp-users-table-container {
   margin: 20px 0;
   overflow-x: unset;
@@ -20,7 +69,7 @@
   /* scrollable table  */
 }
 
-/* File Upload Section Styles */
+/* File Upload Section */
 .csv-upload-section {
   background: #f9f9f9;
   padding: 15px;
@@ -159,7 +208,7 @@
   border-top: 1px solid #ddd;
 }
 
-/* Generated Users Actions Styles */
+/* Generated Users */
 .generated-users-actions {
   display: flex;
   gap: 15px;

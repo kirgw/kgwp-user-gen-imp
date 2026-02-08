@@ -43,9 +43,10 @@ class AdminPages {
         $this->settings_pages = [
             'main' => [
                 'page_title' => 'KG WP Users Generation & Import',
-                'menu_title' => 'Users Gen & Import',
+                'menu_title' => 'Users Import',
                 'capability' => $this->menu_capability,
                 'menu_slug'  => $this->menu_slug,
+                'menu_position' => (int) apply_filters('kgwp_user_gen_imp_menu_position', 71),
                 'callback'   => 'render_admin_page_settings',
                 'icon_url'   => 'dashicons-groups',
             ]
@@ -408,7 +409,8 @@ class AdminPages {
             $page['capability'],
             $page['menu_slug'],
             array($this, $page['callback']),
-            $page['icon_url']
+            $page['icon_url'],
+            $page['menu_position']
         );
     }
 
