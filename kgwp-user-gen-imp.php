@@ -1,9 +1,9 @@
 <?php
 /*
 * Plugin Name: KG WP User Generation & Import
-* Description: Plugin to generate random users and import them to WordPress
+* Description: Plugin to generate random users and import them from CSV to WordPress
 * Author: Kirill G.
-* Version: 0.1.0
+* Version: 1.0.0
 * License: GPLv2 or later
 * Text Domain: kgwp-user-gen-imp
 */
@@ -17,7 +17,7 @@ defined('ABSPATH') || exit;
 define('KGWP_USERGENIMP_PLUGIN_NAME', plugin_basename(__FILE__));
 define('KGWP_USERGENIMP_PLUGIN_PATH', plugin_dir_path(__FILE__));
 define('KGWP_USERGENIMP_PLUGIN_URL', plugin_dir_url(__FILE__));
-define('KGWP_USERGENIMP_PLUGIN_VERSION', '0.1.2');
+define('KGWP_USERGENIMP_PLUGIN_VERSION', '1.0.0');
 define('KGWP_USERGENIMP_SLUG', 'kgwp-user-gen-imp'); // slug both for menu and i18n
 define('KGWP_USERGENIMP_DEFAULT_USERS_AMOUNT', 10);
 define('KGWP_USERGENIMP_DEFAULT_USERS_FILE', 'users.csv');
