@@ -114,7 +114,7 @@ class Generate {
         $email = $this->generate_email($first_name, $last_name);
 
         // Generate username
-        $username = strtolower($first_name . '.' . $last_name);
+        $username = strtolower($first_name . '_' . $last_name);
 
         // Generate password
         $password = wp_generate_password(12, false);
