@@ -53,34 +53,6 @@ final class Init {
 
         // Set locale
         $this->set_locale();
-
-        // Enqueue assets
-        // add_action('init', array( $this, 'enqueue_assets'));
-    }
-
-
-    /**
-     * Enqueue CSS and JS
-     *
-     * @return void
-     */
-    public function enqueue_assets() {
-
-        wp_enqueue_style(
-            'kgwp-user-gen-imp-styles',
-            KGWP_USERGENIMP_PLUGIN_URL . 'assets/kgwp-user-gen-imp-frontend-styles.css', // not used
-            array(),
-            KGWP_USERGENIMP_PLUGIN_VERSION,
-            'all'
-        );
-
-        wp_enqueue_script(
-            'kgwp-user-gen-imp-scripts',
-            KGWP_USERGENIMP_PLUGIN_URL . 'assets/kgwp-user-gen-imp-scripts.js', // not used
-            array('jquery'),
-            KGWP_USERGENIMP_PLUGIN_VERSION,
-            false
-        );
     }
 
 
